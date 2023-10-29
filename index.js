@@ -26,11 +26,17 @@ let persons = [
 
 app.get('/', (req, res) => {
     res.send('<h1>Hello World!</h1>')
-  })
+})
   
-  app.get('/api/persons', (req, res) => {
-    res.json(persons)
-  })
+app.get('/api/persons', (req, res) => {
+res.json(persons)
+})
+
+app.get('/info', (req, res) => {
+    const personAmount = persons.length
+    const timeStamp = new Date()
+    res.send(`Phonebook has info for ${personAmount} people <br>${timeStamp}`)
+})
   
   const PORT = 3001
   app.listen(PORT, () => {
