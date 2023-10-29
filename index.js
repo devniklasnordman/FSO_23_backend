@@ -1,6 +1,8 @@
 const express = require('express')
 const app = express()
 
+app.use(express.json())
+
 let persons = [
     {
         "name": "Arto Hellas",
@@ -60,6 +62,27 @@ app.delete('/api/persons/:id', (request, response) => {
   
     response.status(204).end()
   })
+
+// Generate new id, max value 1000
+const generateId = () => {
+    const newId = Math.floor(Math.random() * 1000)
+    return newId
+  }
+
+// Add new person
+app.post('/api/persons', (request, response) => {
+    const body = request.body
+    const phoneNumber = Number(body.number)
+
+    const person = {
+        name: body.name,
+        number: phoneNumber,
+        id: generateId(),
+      }
+
+    persons.push(person)
+    response.json(person)
+})
   
   const PORT = 3001
   app.listen(PORT, () => {
