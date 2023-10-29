@@ -73,7 +73,22 @@ const generateId = () => {
 app.post('/api/persons', (request, response) => {
     const body = request.body
     const phoneNumber = Number(body.number)
+    const nameOnList = persons.some(person => person.name.toLowerCase() === body.name.toLowerCase())
 
+    // Error handling, missing name or number
+    if (!body.name || !body.number) {
+        return response.status(400).json({ 
+            error: 'Name or number missing' 
+          })
+    }
+    // Error handling, name already in phonebook
+    if (nameOnList) {
+        return response.status(400).json({ 
+            error: 'Name already in Phonebook' 
+          })
+    }
+
+    // Create person object
     const person = {
         name: body.name,
         number: phoneNumber,
