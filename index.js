@@ -24,14 +24,17 @@ let persons = [
       }
 ]
 
+// Get front page
 app.get('/', (req, res) => {
     res.send('<h1>Hello World!</h1>')
 })
   
+// Get all persons
 app.get('/api/persons', (req, res) => {
     res.json(persons)
 })
 
+// Get single person
 app.get('/api/persons/:id', (request, response) => {
     const id = Number(request.params.id)
     const person = persons.find(person => person.id === id)
@@ -43,11 +46,20 @@ app.get('/api/persons/:id', (request, response) => {
       }
 })
 
+// Get info page
 app.get('/info', (req, res) => {
     const personAmount = persons.length
     const timeStamp = new Date()
     res.send(`Phonebook has info for ${personAmount} people <br>${timeStamp}`)
 })
+
+// Delete person
+app.delete('/api/persons/:id', (request, response) => {
+    const id = Number(request.params.id)
+    persons = persons.filter(person => person.id !== id)
+  
+    response.status(204).end()
+  })
   
   const PORT = 3001
   app.listen(PORT, () => {
