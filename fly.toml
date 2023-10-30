@@ -1,18 +1,15 @@
-# fly.toml app configuration file generated for cool-dust-7199 on 2023-10-31T01:07:13+02:00
+# fly.toml app configuration file generated for dawn-fog-6610 on 2023-10-31T01:18:14+02:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = "cool-dust-7199"
+app = "dawn-fog-6610"
 primary_region = "arn"
 
 [build]
 
-[env]
-  PORT = "3000" # add this
-
 [http_service]
-  internal_port = 3000 # ensure that this is same as PORT
+  internal_port = 3000
   force_https = true
   auto_stop_machines = true
   auto_start_machines = true
