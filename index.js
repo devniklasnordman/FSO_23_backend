@@ -1,8 +1,10 @@
 const express = require('express')
 const morgan = require('morgan')
+const path = require('path')
 const app = express()
 const cors = require('cors')
 
+app.use(express.static(path.join(__dirname, 'public')))
 app.use(express.json())
 app.use(cors())
 
@@ -41,7 +43,8 @@ let persons = [
 
 // Get front page
 app.get('/', (req, res) => {
-    res.send('<h1>Hello World!</h1>')
+    indexPath = path.join(__dirname, 'public', 'index.html')
+    res.sendFile(indexPath)
 })
   
 // Get all persons
@@ -90,12 +93,14 @@ app.post('/api/persons', (request, response) => {
 
     // Error handling, missing name or number
     if (!body.name || !body.number) {
+      console.log('Error: Name or number missing')
         return response.status(400).json({ 
             error: 'Name or number missing' 
           })
     }
     // Error handling, name already in phonebook
     if (nameOnList) {
+      console.log('Error: Name already in Phonebook')
         return response.status(400).json({ 
             error: 'Name already in Phonebook' 
           })
@@ -109,6 +114,7 @@ app.post('/api/persons', (request, response) => {
       }
 
     persons.push(person)
+    console.log('New person added:', person)
     response.json(person)
 })
   
