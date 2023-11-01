@@ -43,6 +43,17 @@ let persons = [
       }
 ]
 
+// Get info page
+app.get('/info', (req, res) => {
+  console.log('Where is my info pageeeeeee')
+  Person.countDocuments({})
+    .then(count => {
+      const timeStamp = new Date()
+      res.send(`Phonebook has info for ${count} people <br>${timeStamp}`)
+    })
+    .catch('info page error')
+})
+
 // Get front page
 app.get('/', (req, res) => {
     indexPath = path.join(__dirname, 'public', 'index.html')
@@ -50,37 +61,47 @@ app.get('/', (req, res) => {
 })
   
 // Get all persons
-app.get('/api/persons', (req, res) => {
+app.get('/api/persons', (req, res, next) => {
     Person.find({}).then(persons => {
-      res.json(persons)
+      if (persons) {
+        res.json(persons)
+      } else {
+        response.status(404).end()
+      }
+      })
+      .catch(error => {
+        console.log(error)
+        response.status(500).end()
     })
 })
 
 // Get single person
-app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const person = persons.find(person => person.id === id)
-    
-    if (person) {
-        response.json(person)
-      } else {
-        response.status(404).end()
-      }
+app.get('/api/persons/:id', (request, response, next) => {
+    Person.findById(request.params.id)
+      .then(person => {
+        if (person) {
+            response.json(person)
+          } else {
+            response.status(404).end()
+          }
+      })
 })
+  
 
-// Get info page
-app.get('/info', (req, res) => {
-    const personAmount = persons.length
-    const timeStamp = new Date()
-    res.send(`Phonebook has info for ${personAmount} people <br>${timeStamp}`)
-})
+
 
 // Delete person
-app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    persons = persons.filter(person => person.id !== id)
-  
-    response.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+    const id = request.params.id
+    Person.findOneAndDelete({ _id: id})
+      .then(result => {
+        if(result) {
+          response.status(204).end()
+        } else {
+          response.status(404).send({ error: 'Person not found'})
+        }
+      })
+      .catch(error => next(error))
   })
 
 // Generate new id, max value 1000
@@ -90,7 +111,7 @@ const generateId = () => {
   }
 
 // Add new person
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     const body = request.body
     const phoneNumber = Number(body.number)
     const nameOnList = persons.some(person => person.name.toLowerCase() === body.name.toLowerCase())
@@ -98,23 +119,18 @@ app.post('/api/persons', (request, response) => {
     // Error handling, missing name or number
     if (!body.name || !body.number) {
       console.log('Error: Name or number missing')
-        return response.status(400).json({ 
-            error: 'Name or number missing' 
-          })
+        return error => next(error)
     }
     // Error handling, name already in phonebook
     if (nameOnList) {
       console.log('Error: Name already in Phonebook')
-        return response.status(400).json({ 
-            error: 'Name already in Phonebook' 
-          })
+        return error => next(error)
     }
 
     // Create person object
     const person = new Person({
         name: body.name,
-        number: phoneNumber,
-        id: generateId(),
+        number: phoneNumber
       })
 
     person.save().then(savedPerson => {
@@ -122,6 +138,35 @@ app.post('/api/persons', (request, response) => {
       response.json(savedPerson)
     })
 })
+
+// Update number of an existing person in Phonebook
+app.put('/api/persons/:id', (request, response, next) => {
+  const body = request.body
+
+  const person = {
+    name: body.name,
+    number: body.number
+  }
+
+  Person.findByIdAndUpdate(request.params.id, person, { new: true })
+    .then(updatedPerson => {
+      response.json(updatedPerson)
+    })
+    .catch(error => next(error))
+})
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  }
+
+  next(error)
+}
+
+// tämä tulee kaikkien muiden middlewarejen rekisteröinnin jälkeen!
+app.use(errorHandler)
   
 const PORT = process.env.PORT
 app.listen(PORT, () => {
