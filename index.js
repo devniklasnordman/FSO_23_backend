@@ -111,15 +111,16 @@ app.post('/api/persons', (request, response) => {
     }
 
     // Create person object
-    const person = {
+    const person = new Person({
         name: body.name,
         number: phoneNumber,
         id: generateId(),
-      }
+      })
 
-    persons.push(person)
-    console.log('New person added:', person)
-    response.json(person)
+    person.save().then(savedPerson => {
+      console.log('New person added:', savedPerson)
+      response.json(savedPerson)
+    })
 })
   
 const PORT = process.env.PORT
