@@ -45,7 +45,7 @@ let persons = [
 
 // Get info page
 app.get('/info', (req, res) => {
-  console.log('Where is my info pageeeeeee')
+  console.log('Handling /info route')
   Person.countDocuments({})
     .then(count => {
       const timeStamp = new Date()
@@ -56,23 +56,22 @@ app.get('/info', (req, res) => {
 
 // Get front page
 app.get('/', (req, res) => {
+    console.log('Handling / route')
     indexPath = path.join(__dirname, 'public', 'index.html')
     res.sendFile(indexPath)
 })
   
 // Get all persons
 app.get('/api/persons', (req, res, next) => {
-    Person.find({}).then(persons => {
-      if (persons) {
-        res.json(persons)
-      } else {
-        response.status(404).end()
-      }
+    Person.find({})
+      .then(persons => {
+        if (persons) {
+          res.json(persons)
+        } else {
+          res.status(404).end()
+        }
       })
-      .catch(error => {
-        console.log(error)
-        response.status(500).end()
-    })
+      .catch(error => next(error))
 })
 
 // Get single person
@@ -114,29 +113,32 @@ const generateId = () => {
 app.post('/api/persons', (request, response, next) => {
     const body = request.body
     const phoneNumber = Number(body.number)
-    const nameOnList = persons.some(person => person.name.toLowerCase() === body.name.toLowerCase())
 
     // Error handling, missing name or number
     if (!body.name || !body.number) {
-      console.log('Error: Name or number missing')
-        return error => next(error)
+        return response.status(400).json({ error: 'Name or number missing'})
     }
-    // Error handling, name already in phonebook
-    if (nameOnList) {
-      console.log('Error: Name already in Phonebook')
-        return error => next(error)
-    }
+    // Check for existing name in phonebook
+    Person.findOne({ name: body.name })
+      .then(existingPerson => {
+        if (existingPerson) {
+          return response.status(400).json({ error: 'Name already exist in Phonebook'})
+        }
+      
+        // Create person object
+        const person = new Person({
+            name: body.name,
+            number: phoneNumber
+          })
 
-    // Create person object
-    const person = new Person({
-        name: body.name,
-        number: phoneNumber
-      })
-
-    person.save().then(savedPerson => {
-      console.log('New person added:', savedPerson)
-      response.json(savedPerson)
-    })
+        person.save()
+          .then(savedPerson => {
+            console.log('New person added:', savedPerson)
+            response.json(savedPerson)
+          })
+          .catch(error => next(error))
+       })
+       .catch.error(error => next(error))
 })
 
 // Update number of an existing person in Phonebook
