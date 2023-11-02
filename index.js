@@ -103,21 +103,25 @@ app.delete('/api/persons/:id', (request, response, next) => {
       .catch(error => next(error))
   })
 
-// Generate new id, max value 1000
-const generateId = () => {
-    const newId = Math.floor(Math.random() * 1000)
-    return newId
-  }
 
 // Add new person
 app.post('/api/persons', (request, response, next) => {
     const body = request.body
-    const phoneNumber = Number(body.number)
+    const phoneNumber = body.number
 
     // Error handling, missing name or number
     if (!body.name || !body.number) {
         return response.status(400).json({ error: 'Name or number missing'})
     }
+
+    // Check for validation error
+    const validationPattern = /^\d{2,3}-\d{6,}$/
+    console.log(`number to add ${phoneNumber}`)
+    if (!validationPattern.test(phoneNumber)) {
+      return response.status(400).json({ error: `Not a valid phone number!
+      Corrext format of phone number is 02-345678... OR 040-456789...`})
+    }
+
     // Check for existing name in phonebook
     Person.findOne({ name: body.name })
       .then(existingPerson => {
@@ -138,12 +142,26 @@ app.post('/api/persons', (request, response, next) => {
           })
           .catch(error => next(error))
        })
-       .catch.error(error => next(error))
+       .catch(error => next(error))
 })
 
 // Update number of an existing person in Phonebook
 app.put('/api/persons/:id', (request, response, next) => {
   const body = request.body
+  const phoneNumber = request.body.number
+
+  // Error handling, missing name or number
+  if (!body.name || !body.number) {
+    return response.status(400).json({ error: 'Name or number missing'})
+}
+
+  // Check for validation error
+  const validationPattern = /^\d{2,3}-\d{6,}$/
+  console.log(`number to add ${phoneNumber}`)
+  if (!validationPattern.test(phoneNumber)) {
+    return response.status(400).json({ error: `Not a valid phone number!
+    Corrext format of phone number is 02-345678... OR 040-456789...`})
+  }
 
   const person = {
     name: body.name,
@@ -162,6 +180,8 @@ const errorHandler = (error, request, response, next) => {
 
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
   }
 
   next(error)
@@ -170,7 +190,7 @@ const errorHandler = (error, request, response, next) => {
 // tämä tulee kaikkien muiden middlewarejen rekisteröinnin jälkeen!
 app.use(errorHandler)
   
-const PORT = process.env.PORT
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
